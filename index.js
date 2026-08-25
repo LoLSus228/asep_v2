@@ -9,7 +9,7 @@ const cursorGlow = document.getElementById('cursorGlow');
 // - ใส่ path รูปจริงใน "photo" เมื่อพร้อม (เช่น 'assets/members/somchai.jpg')
 // - ถ้า photo เป็น null จะขึ้นเป็นวงกลมไล่สี + หมายเลข ให้ดูเรียบร้อยแทนรูปซ้ำ/รูปหาย
 const gradientPairs = [
-  ['#9b5cff', '#4fd6ff'],
+  ['assets/members/test.png'],
   ['#ef5da8', '#f59e4a'],
   ['#4fd6ff', '#7a4dff'],
   ['#f59e4a', '#9b5cff'],
