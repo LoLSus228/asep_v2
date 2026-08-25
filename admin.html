@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ASEP Admin | จัดการข้อมูล</title>
+    <meta name="robots" content="noindex" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #020204;
+        --card: rgba(255, 255, 255, 0.05);
+        --border: rgba(255, 255, 255, 0.12);
+        --purple: #9b5cff;
+        --blue: #4fd6ff;
+        --text: #f4f2fb;
+        --muted: rgba(255, 255, 255, 0.6);
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "IBM Plex Sans Thai", sans-serif;
+        min-height: 100vh;
+        padding: 24px 16px 80px;
+      }
+      .wrap { max-width: 860px; margin: 0 auto; }
+      h1 { font-size: 1.6rem; margin-bottom: 4px; }
+      h1 span { color: var(--purple); }
+      .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 24px; }
+      .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+      .tab-btn {
+        padding: 10px 18px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .tab-btn.active {
+        background: linear-gradient(90deg, var(--purple), var(--blue));
+        border-color: transparent;
+        color: #fff;
+        font-weight: 600;
+      }
+      .panel { display: none; }
+      .panel.active { display: block; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+      label { display: block; font-size: 0.8rem; color: var(--muted); margin: 10px 0 4px; }
+      input[type="text"], textarea, select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.35);
+        color: var(--text);
+        font-family: inherit;
+        font-size: 0.95rem;
+      }
+      textarea { resize: vertical; min-height: 70px; }
+      input:focus, textarea:focus { outline: none; border-color: var(--purple); }
+      .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+      .btn {
+        padding: 9px 16px;
+        border-radius: 8px;
+        border: none;
+        background: linear-gradient(90deg, var(--purple), var(--blue));
+        color: #fff;
+        font-family: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+      .btn:hover { opacity: 0.85; }
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-weight: 400;
+      }
+      .btn-danger { background: #e5484d; }
+      .item-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+      .item-title { font-weight: 600; }
+      .item-fields { margin-top: 8px; }
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: linear-gradient(90deg, var(--purple), var(--blue));
+        color: #fff;
+        padding: 12px 22px;
+        border-radius: 999px;
+        font-weight: 600;
+        transition: transform 0.3s ease;
+        z-index: 99;
+      }
+      .toast.show { transform: translateX(-50%) translateY(0); }
+      a.back { color: var(--blue); text-decoration: none; font-size: 0.9rem; }
+      .hint { font-size: 0.78rem; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+      @media (max-width: 600px) {
+        h1 { font-size: 1.3rem; }
+        .card { padding: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>ASEP<span>.</span> Admin</h1>
+      <p class="sub">
+        หน้าจัดการข้อมูลแบบง่าย — บันทึกลงเครื่องนี้ (localStorage) ไม่ต้องใช้ดาต้าเบส
+        · <a class="back" href="index.html">← กลับหน้าเว็บ</a>
+      </p>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="members">👥 สมาชิก</button>
+        <button class="tab-btn" data-tab="announces">📢 ประชาสัมพันธ์</button>
+        <button class="tab-btn" data-tab="gallery">🖼️ กิจกรรม</button>
+        <button class="tab-btn" data-tab="export">💾 สำรอง/นำเข้า</button>
+      </div>
+
+      <!-- ===== สมาชิก ===== -->
+      <div class="panel active" id="panel-members"></div>
+
+      <!-- ===== ประชาสัมพันธ์ ===== -->
+      <div class="panel" id="panel-announces">
+        <div id="announceEditor"></div>
+        <button class="btn" id="addAnnounce">+ เพิ่มประกาศ</button>
+      </div>
+
+      <!-- ===== กิจกรรม ===== -->
+      <div class="panel" id="panel-gallery">
+        <div id="galleryEditor"></div>
+        <button class="btn" id="addGallery">+ เพิ่มรูปกิจกรรม</button>
+        <p class="hint">
+          💡 เพิ่มไฟล์รูปในโฟลเดอร์ <code>assets/activities/</code> แล้วกรอก path เช่น
+          <code>assets/activities/ชื่อรูป.jpg</code> — tag ที่มี: science / math / sibling
+        </p>
+      </div>
+
+      <!-- ===== สำรอง ===== -->
+      <div class="panel" id="panel-export">
+        <div class="card">
+          <strong>สำรองข้อมูล</strong>
+          <p class="hint">คัดลอกข้อความด้านล่างเก็บไว้ หรือกดปุ่มดาวน์โหลดเป็นไฟล์ JSON</p>
+          <textarea id="exportArea" rows="8" style="margin-top: 8px"></textarea>
+          <div class="row" style="margin-top: 10px">
+            <button class="btn btn-ghost" id="copyExport">📋 คัดลอก</button>
+            <button class="btn btn-ghost" id="downloadExport">⬇️ ดาวน์โหลด .json</button>
+          </div>
+        </div>
+        <div class="card">
+          <strong>นำเข้าข้อมูล</strong>
+          <p class="hint">วางข้อความ JSON ที่สำรองไว้ แล้วกดนำเข้า</p>
+          <textarea id="importArea" rows="6" style="margin-top: 8px"></textarea>
+          <div class="row" style="margin-top: 10px">
+            <button class="btn" id="doImport">📥 นำเข้า</button>
+            <button class="btn btn-danger" id="resetAll">🗑️ ล้างข้อมูลทั้งหมด</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">บันทึกแล้ว ✅</div>
+
+    <script>
+      const KEYS = { members: 'asep_members', announces: 'asep_announces', gallery: 'asep_gallery' };
+      const $ = (sel) => document.querySelector(sel);
+
+      const load = (key) => {
+        try { return JSON.parse(localStorage.getItem(key)) || []; } catch (_) { return []; }
+      };
+      const save = (key, data) => localStorage.setItem(key, JSON.stringify(data));
+
+      let toastTimer;
+      const showToast = () => {
+        const t = $('#toast');
+        t.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+      };
+
+      // ===== Tabs =====
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+          document.querySelectorAll('.panel').forEach((p) => p.classList.remove('active'));
+          btn.classList.add('active');
+          $(`#panel-${btn.dataset.tab}`).classList.add('active');
+        });
+      });
+
+      // ===== สมาชิก =====
+      const renderMembers = () => {
+        const data = load(KEYS.members);
+        const wrap = $('#panel-members');
+        if (!data.length) {
+          wrap.innerHTML = '<div class="card">ยังไม่มีข้อมูลสมาชิก — เปิดหน้าเว็บก่อน 1 ครั้งเพื่อสร้างข้อมูลเริ่มต้น</div>';
+          return;
+        }
+        wrap.innerHTML = '';
+        data.forEach((m, i) => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div class="item-head">
+              <span class="item-title">คนที่ ${i + 1}</span>
+              <button class="btn btn-danger" data-del="${i}" style="padding:5px 12px">ลบ</button>
+            </div>
+            <div class="item-fields row">
+              <div style="flex:1;min-width:140px">
+                <label>ชื่อ</label>
+                <input type="text" data-f="name" value="${(m.name || '').replace(/"/g, '&quot;')}" />
+              </div>
+              <div style="flex:1;min-width:140px">
+                <label>Instagram (@...)</label>
+                <input type="text" data-f="ig" value="${(m.ig || '').replace(/"/g, '&quot;')}" />
+              </div>
+              <div style="flex:1;min-width:180px">
+                <label>รูป (path หรือเว้นว่าง = วงกลมไล่สี)</label>
+                <input type="text" data-f="photo" value="${(m.photo || '').replace(/"/g, '&quot;')}" placeholder="assets/members/xxx.jpg" />
+              </div>
+            </div>
+          `;
+          card.querySelectorAll('[data-f]').forEach((inp) => {
+            inp.addEventListener('change', () => {
+              const d = load(KEYS.members);
+              d[i][inp.dataset.f] = inp.value.trim() || null;
+              save(KEYS.members, d);
+              showToast();
+            });
+          });
+          card.querySelector('[data-del]').addEventListener('click', () => {
+            const d = load(KEYS.members);
+            d.splice(i, 1);
+            save(KEYS.members, d);
+            renderMembers();
+            showToast();
+          });
+          wrap.appendChild(card);
+        });
+        const addBtn = document.createElement('button');
+        addBtn.className = 'btn';
+        addBtn.textContent = '+ เพิ่มสมาชิก';
+        addBtn.addEventListener('click', () => {
+          const d = load(KEYS.members);
+          d.push({ name: 'สมาชิกใหม่', ig: '@new_member', photo: null });
+          save(KEYS.members, d);
+          renderMembers();
+        });
+        wrap.appendChild(addBtn);
+      };
+
+      // ===== ประชาสัมพันธ์ =====
+      const renderAnnounces = () => {
+        const data = load(KEYS.announces);
+        const wrap = $('#announceEditor');
+        wrap.innerHTML = '';
+        data.forEach((a, i) => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div class="item-head">
+              <span class="item-title">ประกาศ #${i + 1}</span>
+              <button class="btn btn-danger" data-del style="padding:5px 12px">ลบ</button>
+            </div>
+            <div class="item-fields">
+              <div class="row">
+                <div style="flex:1;min-width:150px"><label>วันที่</label><input type="text" data-f="date" value="${(a.date || '')}"/></div>
+                <div style="flex:2;min-width:180px"><label>หัวข้อ</label><input type="text" data-f="title" value="${(a.title || '').replace(/"/g, '&quot;')}"/></div>
+              </div>
+              <label>รายละเอียด</label>
+              <textarea data-f="desc">${a.desc || ''}</textarea>
+              <div class="row" style="margin-top:8px">
+                <div style="flex:1;min-width:120px"><label>แท็ก</label><input type="text" data-f="tag" value="${a.tag || ''}"/></div>
+                <div><label><input type="checkbox" data-f="isNew" ${a.isNew ? 'checked' : ''}/> แสดงป้าย NEW</label></div>
+                <div style="flex:1;min-width:160px"><label>รูป (ถ้ามี)</label><input type="text" data-f="image" value="${a.image || ''}"/></div>
+              </div>
+            </div>
+          `;
+          card.querySelectorAll('[data-f]').forEach((inp) => {
+            inp.addEventListener('change', () => {
+              const d = load(KEYS.announces);
+              d[i][inp.dataset.f] = inp.type === 'checkbox' ? inp.checked : inp.value.trim() || null;
+              save(KEYS.announces, d);
+              showToast();
+            });
+          });
+          card.querySelector('[data-del]').addEventListener('click', () => {
+            const d = load(KEYS.announces);
+            d.splice(i, 1);
+            save(KEYS.announces, d);
+            renderAnnounces();
+            showToast();
+          });
+          wrap.appendChild(card);
+        });
+      };
+      $('#addAnnounce').addEventListener('click', () => {
+        const d = load(KEYS.announces);
+        d.unshift({ date: '', title: 'ประกาศใหม่', desc: '', tag: 'ทั่วไป', isNew: true, image: null });
+        save(KEYS.announces, d);
+        renderAnnounces();
+      });
+
+      // ===== กิจกรรม =====
+      const renderGallery = () => {
+        const data = load(KEYS.gallery);
+        const wrap = $('#galleryEditor');
+        wrap.innerHTML = '';
+        data.forEach((g, i) => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div class="item-head">
+              <img src="${g.img}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px" onerror="this.style.opacity=0.3"/>
+              <button class="btn btn-danger" data-del style="padding:5px 12px;margin-left:auto">ลบ</button>
+            </div>
+            <div class="item-fields">
+              <label>Path รูป</label>
+              <input type="text" data-f="img" value="${(g.img || '').replace(/"/g, '&quot;')}"/>
+              <div class="row" style="margin-top:8px">
+                <div style="flex:1;min-width:140px"><label>คำบรรยาย</label><input type="text" data-f="cap" value="${(g.cap || '').replace(/"/g, '&quot;')}"/></div>
+                <div style="flex:1;min-width:120px"><label>tag</label>
+                  <select data-f="tag">
+                    ${['science','math','sibling'].map(t => `<option value="${t}" ${g.tag===t?'selected':''}>${t}</option>`).join('')}
+                  </select>
+                </div>
+                <div style="flex:1;min-width:110px"><label>ขนาด</label>
+                  <select data-f="size">
+                    <option value="" ${!g.size?'selected':''}>ปกติ</option>
+                    <option value="wide" ${g.size==='wide'?'selected':''}>wide</option>
+                    <option value="tall" ${g.size==='tall'?'selected':''}>tall</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          `;
+          card.querySelectorAll('[data-f]').forEach((inp) => {
+            inp.addEventListener('change', () => {
+              const d = load(KEYS.gallery);
+              d[i][inp.dataset.f] = inp.value;
+              save(KEYS.gallery, d);
+              showToast();
+            });
+          });
+          card.querySelector('[data-del]').addEventListener('click', () => {
+            const d = load(KEYS.gallery);
+            d.splice(i, 1);
+            save(KEYS.gallery, d);
+            renderGallery();
+            showToast();
+          });
+          wrap.appendChild(card);
+        });
+      };
+      $('#addGallery').addEventListener('click', () => {
+        const d = load(KEYS.gallery);
+        d.push({ img: 'assets/activities/', alt: '', cap: 'กิจกรรมใหม่', tag: 'science', size: '' });
+        save(KEYS.gallery, d);
+        renderGallery();
+      });
+
+      // ===== สำรอง / นำเข้า =====
+      const refreshExport = () => {
+        const all = {};
+        Object.entries(KEYS).forEach(([k, key]) => { all[k] = load(key); });
+        $('#exportArea').value = JSON.stringify(all, null, 2);
+      };
+      $('#copyExport').addEventListener('click', async () => {
+        await navigator.clipboard.writeText($('#exportArea').value);
+        showToast();
+      });
+      $('#downloadExport').addEventListener('click', () => {
+        const blob = new Blob([$('#exportArea').value], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'asep-backup.json';
+        a.click();
+      });
+      $('#doImport').addEventListener('click', () => {
+        try {
+          const parsed = JSON.parse($('#importArea').value);
+          Object.entries(KEYS).forEach(([k, key]) => {
+            if (parsed[k]) save(key, parsed[k]);
+          });
+          renderMembers(); renderAnnounces(); renderGallery(); refreshExport();
+          showToast();
+        } catch (_) {
+          alert('JSON ไม่ถูกต้อง 😢');
+        }
+      });
+      $('#resetAll').addEventListener('click', () => {
+        if (!confirm('ล้างข้อมูลที่บันทึกไว้ทั้งหมด?')) return;
+        Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
+        location.reload();
+      });
+
+      renderMembers();
+      renderAnnounces();
+      renderGallery();
+      refreshExport();
+    </script>
+  </body>
+</html>
